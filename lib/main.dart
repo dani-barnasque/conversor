@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:core';
 import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+
 import 'package:http/http.dart' as http;
 
 const request = "https://api.hgbrasil.com/finance/quotations?key=4f8a32d2";
@@ -13,15 +15,18 @@ void main() async {
     MaterialApp(
       home: Home(),
       theme: ThemeData(
-          hintColor: Colors.amber,
-          primaryColor: Colors.white,
-          inputDecorationTheme: InputDecorationTheme(
-            enabledBorder:
-                OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-            focusedBorder:
-                OutlineInputBorder(borderSide: BorderSide(color: Colors.amber)),
-            hintStyle: TextStyle(color: Colors.amber),
-          )),
+        hintColor: Colors.amber,
+        primaryColor: Colors.white,
+        inputDecorationTheme: InputDecorationTheme(
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.white),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.amber),
+          ),
+          hintStyle: TextStyle(color: Colors.amber),
+        ),
+      ),
     ),
   );
 }
@@ -56,8 +61,8 @@ class _HomeState extends State<Home> {
       return;
     }
     double real = double.parse(text);
-    dolarController.text = (real / dolar).toStringAsFixed(2);
-    euroController.text = (real / euro).toStringAsFixed(2);
+    dolarController.text = _convertFromTo(real, dolar);
+    euroController.text = _convertFromTo(real, euro);
   }
 
   void _dolarChange(String text) {
@@ -68,7 +73,7 @@ class _HomeState extends State<Home> {
     double dolar = double.parse(text);
     double real = dolar * this.dolar;
     realController.text = (real).toStringAsFixed(2);
-    euroController.text = (real / euro).toStringAsFixed(2);
+    euroController.text = _convertFromTo(real, euro);
   }
 
   void _euroChange(String text) {
@@ -79,7 +84,11 @@ class _HomeState extends State<Home> {
     double euro = double.parse(text);
     double real = euro * this.euro;
     realController.text = (real).toStringAsFixed(2);
-    dolarController.text = (real / dolar).toStringAsFixed(2);
+    dolarController.text = _convertFromTo(real, dolar);
+  }
+
+  String _convertFromTo(double from, double to) {
+    return (from / to).toStringAsFixed(2);
   }
 
   @override
@@ -92,66 +101,67 @@ class _HomeState extends State<Home> {
         centerTitle: true,
       ),
       body: FutureBuilder<Map>(
-          future: getData(),
-          builder: (context, snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.none:
-              case ConnectionState.waiting:
+        future: getData(),
+        builder: (context, snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+            case ConnectionState.waiting:
+              return Center(
+                child: Text(
+                  "Carregando Dados",
+                  style: TextStyle(color: Colors.amber, fontSize: 25.00),
+                  textAlign: TextAlign.center,
+                ),
+              );
+            default:
+              if (snapshot.hasError) {
                 return Center(
                   child: Text(
-                    "Carregando Dados",
+                    "Erro ao Carregar Dados",
                     style: TextStyle(color: Colors.amber, fontSize: 25.00),
                     textAlign: TextAlign.center,
                   ),
                 );
-              default:
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text(
-                      "Erro ao Carregar Dados",
-                      style: TextStyle(color: Colors.amber, fontSize: 25.00),
-                      textAlign: TextAlign.center,
-                    ),
-                  );
-                } else {
-                  dolar = snapshot.data["results"]["currencies"]["USD"]["buy"];
-                  euro = snapshot.data["results"]["currencies"]['EUR']['buy'];
-                  return SingleChildScrollView(
-                    padding: EdgeInsets.all(10.00),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        Icon(
-                          Icons.attach_money,
-                          size: 150.00,
-                          color: Colors.amber,
-                        ),
-                        buildTextField(
-                          'Reais',
-                          'R\$',
-                          realController,
-                          _realChange,
-                        ),
-                        Divider(),
-                        buildTextField(
-                          'Dólares',
-                          'U\$',
-                          dolarController,
-                          _dolarChange,
-                        ),
-                        Divider(),
-                        buildTextField(
-                          'Euros',
-                          '€',
-                          euroController,
-                          _euroChange,
-                        ),
-                      ],
-                    ),
-                  );
-                }
-            }
-          }),
+              } else {
+                dolar = snapshot.data["results"]["currencies"]["USD"]["buy"];
+                euro = snapshot.data["results"]["currencies"]['EUR']['buy'];
+                return SingleChildScrollView(
+                  padding: EdgeInsets.all(10.00),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Icon(
+                        Icons.attach_money,
+                        size: 150.00,
+                        color: Colors.amber,
+                      ),
+                      buildTextField(
+                        'Reais',
+                        'R\$',
+                        realController,
+                        _realChange,
+                      ),
+                      Divider(),
+                      buildTextField(
+                        'Dólares',
+                        'U\$',
+                        dolarController,
+                        _dolarChange,
+                      ),
+                      Divider(),
+                      buildTextField(
+                        'Euros',
+                        '€',
+                        euroController,
+                        _euroChange,
+                      ),
+                    ],
+                  ),
+                );
+              }
+          }
+        },
+      ),
     );
   }
 }
